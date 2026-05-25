@@ -1,0 +1,38 @@
+name: audit-logs-get
+description: |
+  Get audit logs for a specific session. Query params: page, perPage, sortBy,
+  filterBy, mode. Server defaults: page=1, perPage=20, mode=PRODUCTION.
+method: GET
+path: /{orgId}/audit-logs/{sessionId}?page={page}&perPage={perPage}&sortBy={sortBy}&filterBy={filterBy}&mode={mode}
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: sessionId
+    kind: string
+    description: Journey session ID.
+    example: "sess-..."
+optional_vars:
+  - name: page
+    kind: string
+    description: Page number (1-indexed).
+    default: "1"
+  - name: perPage
+    kind: string
+    description: Records per page.
+    default: "20"
+  - name: sortBy
+    kind: string
+    description: Sort key.
+    default: ""
+  - name: filterBy
+    kind: string
+    description: Filter expression.
+    default: ""
+  - name: mode
+    kind: string
+    description: |
+      Session mode. Typically `PRODUCTION` or `SANDBOX`.
+    default: "PRODUCTION"

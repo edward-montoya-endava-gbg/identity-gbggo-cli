@@ -1,0 +1,12 @@
+name: device-connect
+description: Exchange a one-time connect token for an end-user JWT. Public endpoint.
+method: POST
+path: /device/connect
+auth: none
+required_vars:
+  - name: connectToken
+    kind: string
+    description: One-time connect token from device/start.
+    example: "ctk-..."
+body_template: |
+  { "connectToken": {{ connectToken | json_encode }} }

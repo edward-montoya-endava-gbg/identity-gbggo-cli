@@ -1,0 +1,30 @@
+name: create-journey-from-template
+description: |
+  Instantiate a journey (or other resource) from an existing template.
+  `type` is a path param; typically `template` or `journey`.
+method: POST
+path: /resources/{orgId}/{type}/actions/create-journey-from-template
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: type
+    kind: string
+    description: |
+      Resource type (path param). Typically `template` for this action.
+    example: "template"
+  - name: templateId
+    kind: string
+    description: Template ID to instantiate from.
+    example: "tpl-..."
+  - name: name
+    kind: string
+    description: Name of the new journey.
+    example: "My Journey"
+body_template: |
+  {
+    "templateId": {{ templateId | json_encode }},
+    "name": {{ name | json_encode }}
+  }

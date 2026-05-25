@@ -1,0 +1,24 @@
+name: unlink-journey
+description: |
+  Remove a parent-child link between organisations for a journey.
+method: POST
+path: /resources/{orgId}/journey/actions/unlink-journey
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: parentId
+    kind: string
+    description: Parent journey ID.
+    example: "j-..."
+  - name: childId
+    kind: string
+    description: Child journey ID.
+    example: "j-..."
+body_template: |
+  {
+    "parentId": {{ parentId | json_encode }},
+    "childId": {{ childId | json_encode }}
+  }

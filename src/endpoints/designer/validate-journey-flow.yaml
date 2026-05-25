@@ -1,0 +1,18 @@
+name: validate-journey-flow
+description: |
+  Validate a journey flow definition without persisting it.
+  Renamed on the server from validate-journey-flow to validate-flow.
+method: POST
+path: /resources/{orgId}/journey/actions/validate-flow
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: flow
+    kind: json
+    description: Flow JSON to validate.
+    example: '{}'
+body_template: |
+  { "flow": {{ flow | json_encode | safe }} }

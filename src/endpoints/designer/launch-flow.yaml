@@ -1,0 +1,36 @@
+name: launch-flow
+description: |
+  Launch a delivery instance in Captain via Designer's delivery action.
+  `region` is a path suffix (defaults to `EU`). Enum: EU, US, APAC.
+method: POST
+path: /resources/{orgId}/delivery/actions/start/{region}
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: deliveryId
+    kind: string
+    description: Delivery ID to launch.
+    example: "4bc224a4..."
+optional_vars:
+  - name: region
+    kind: string
+    description: |
+      Deployment region path suffix. One of EU, US, APAC.
+    default: "EU"
+  - name: externalId
+    kind: string
+    description: Caller-supplied external identifier for the run.
+    default: ""
+  - name: prefill
+    kind: json
+    description: Optional prefill data JSON.
+    default: "{}"
+body_template: |
+  {
+    "deliveryId": {{ deliveryId | json_encode }},
+    "externalId": {{ externalId | json_encode }},
+    "prefill": {{ prefill | json_encode | safe }}
+  }

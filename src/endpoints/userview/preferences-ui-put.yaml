@@ -1,0 +1,16 @@
+name: preferences-ui-put
+description: Replace UI preferences for the organisation.
+method: PUT
+path: /{orgId}/preferences/ui
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: preferences
+    kind: json
+    description: Preferences JSON object.
+    example: '{}'
+body_template: |
+  {{ preferences | json_encode | safe }}

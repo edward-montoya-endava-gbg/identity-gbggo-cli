@@ -1,0 +1,19 @@
+name: export-prefill-schema
+description: |
+  Export the prefill JSON schema for a delivery. Note this is under
+  /delivery/actions/, NOT /journey/actions/ — used to integrate prefill into
+  external forms.
+method: POST
+path: /resources/{orgId}/delivery/actions/schema/prefill/export
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: deliveryId
+    kind: string
+    description: Delivery ID to export prefill schema for.
+    example: "4bc224a4..."
+body_template: |
+  { "deliveryId": {{ deliveryId | json_encode }} }

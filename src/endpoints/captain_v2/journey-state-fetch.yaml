@@ -1,0 +1,12 @@
+name: journey-state-fetch
+description: Fetch the current state of a journey instance.
+method: POST
+path: /journey/state/fetch
+auth: bearer
+required_vars:
+  - name: instanceId
+    kind: string
+    description: Journey instance ID.
+    example: "01HX..."
+body_template: |
+  { "instanceId": {{ instanceId | json_encode }} }

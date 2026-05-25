@@ -1,0 +1,14 @@
+name: journey-sessions-processing
+description: Get processing details for a journey session.
+method: GET
+path: /{orgId}/journey-sessions/{id}/processing
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: id
+    kind: string
+    description: Journey session ID.
+    example: "sess-..."

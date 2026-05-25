@@ -1,0 +1,10 @@
+name: preferences-ui-get
+description: Get UI preferences for the organisation.
+method: GET
+path: /{orgId}/preferences/ui
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."

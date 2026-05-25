@@ -1,0 +1,5 @@
+name: health
+description: Public health check. No authentication required.
+method: GET
+path: /health
+auth: none

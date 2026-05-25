@@ -1,0 +1,10 @@
+name: journey-sessions-export
+description: Export journey sessions as NDJSON.
+method: GET
+path: /{orgId}/journey-sessions/export
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."

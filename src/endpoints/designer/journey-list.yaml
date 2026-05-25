@@ -1,0 +1,19 @@
+name: journey-list
+description: |
+  List journey resources for an organisation (Designer resources/actions/list).
+  Returns IndexResources array with id, name, createdTime, lastModifiedTime, history.
+method: POST
+path: /resources/{orgId}/journey/actions/list
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID (path parameter).
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+optional_vars:
+  - name: body
+    kind: json
+    description: Optional list filter body (e.g. {"includeArchived":false}).
+    default: "{}"
+body_template: |
+  {{ body | json_encode | safe }}

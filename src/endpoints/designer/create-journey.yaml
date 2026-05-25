@@ -1,0 +1,26 @@
+name: create-journey
+description: |
+  Create a new journey from flow data (and optional template metadata).
+  Requires action:create on the journey resource.
+method: POST
+path: /resources/{orgId}/journey/actions/create-journey
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: flowData
+    kind: json
+    description: Flow JSON (FlowReadSchema['data']).
+    example: '{}'
+optional_vars:
+  - name: template
+    kind: json
+    description: Optional template metadata JSON (JourneyReadSchema['data']['template']).
+    default: "{}"
+body_template: |
+  {
+    "flowData": {{ flowData | json_encode | safe }},
+    "template": {{ template | json_encode | safe }}
+  }

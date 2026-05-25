@@ -1,0 +1,16 @@
+name: journey-sessions-decision-status
+description: Get decision status for one or more journey sessions.
+method: POST
+path: /{orgId}/journey-sessions/processing/decisionStatus
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: journeySessionIds
+    kind: json
+    description: JSON array of journey session IDs.
+    example: '["sess-1"]'
+body_template: |
+  { "journeySessionIds": {{ journeySessionIds | json_encode | safe }} }

@@ -1,0 +1,14 @@
+name: journey-sessions-delete
+description: Delete a journey session.
+method: DELETE
+path: /{orgId}/journey-sessions/{id}
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: id
+    kind: string
+    description: Journey session ID.
+    example: "sess-..."

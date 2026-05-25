@@ -1,0 +1,159 @@
+# goctl regions.yaml — example. Copy to $XDG_CONFIG_HOME/goctl/regions.yaml
+# or ~/.config/goctl/regions.yaml and fill in the real values.
+#
+# IMPORTANT: this file MUST NOT contain any secrets. Only *_env references that
+# name the environment variable holding the secret are permitted. The CLI
+# config schema rejects literal `client_secret` / `password` / `token` / `client_id`
+# fields with a serde "unknown field" error. See .env.example for the env vars.
+#
+# Grant policy: every callable (env, service) tuple uses the OAuth2 `password`
+# grant — `flow-api-test` (Designer + Captain) and `userview-full` (UserView)
+# are Keycloak USERS, not service-account clients, so credentials are real
+# username + password values supplied via env vars. Designer + UserView prod
+# are bearer-only (`auth: null`) — supply `--token` or `GGO_BEARER_TOKEN`.
+#
+# Path conventions: Captain v1 base = /captain/api, Captain v2 base = /v2/captain,
+# Designer base = /designer/api, UserView base = /view/api. Endpoint manifests
+# carry relative paths (e.g. /journey/start) appended to the base_url.
+
+captain-v1:
+  envs:
+    dev:
+      regions:
+        eu: { base_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/captain/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_CAPTAIN_V1_DEV_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V1_DEV_CLIENT_SECRET   # optional, confidential clients only
+        username_env: GGO_CAPTAIN_V1_DEV_USERNAME
+        password_env: GGO_CAPTAIN_V1_DEV_PASSWORD
+        scope: openid
+    demo:
+      regions:
+        eu: { base_url: https://gbggo4-demo-eu.nonprod.fabric.gbgplatforms.com/captain/api }
+        us: { base_url: https://gbggo4-demo-us.nonprod.fabric.gbgplatforms.com/captain/api }
+        au: { base_url: https://gbggo4-demo-au.nonprod.fabric.gbgplatforms.com/captain/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-demo.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_CAPTAIN_V1_DEMO_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V1_DEMO_CLIENT_SECRET
+        username_env: GGO_CAPTAIN_V1_DEMO_USERNAME
+        password_env: GGO_CAPTAIN_V1_DEMO_PASSWORD
+        scope: openid
+    prod:
+      regions:
+        eu: { base_url: https://eu.platform.go.gbgplc.com/captain/api }
+        us: { base_url: https://us.platform.go.gbgplc.com/captain/api }
+        au: { base_url: https://au.platform.go.gbgplc.com/captain/api }
+      auth:
+        grant_type: password
+        token_url: https://eu.platform.go.gbgplc.com/auth/realms/go/protocol/openid-connect/token   # confirm with ops
+        client_id_env: GGO_CAPTAIN_V1_PROD_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V1_PROD_CLIENT_SECRET
+        username_env: GGO_CAPTAIN_V1_PROD_USERNAME
+        password_env: GGO_CAPTAIN_V1_PROD_PASSWORD
+        scope: openid
+
+captain-v2:
+  envs:
+    dev:
+      regions:
+        eu: { base_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/v2/captain }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_CAPTAIN_V2_DEV_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V2_DEV_CLIENT_SECRET
+        username_env: GGO_CAPTAIN_V2_DEV_USERNAME
+        password_env: GGO_CAPTAIN_V2_DEV_PASSWORD
+        scope: openid
+    demo:
+      regions:
+        eu: { base_url: https://gbggo4-demo-eu.nonprod.fabric.gbgplatforms.com/v2/captain }
+        us: { base_url: https://gbggo4-demo-us.nonprod.fabric.gbgplatforms.com/v2/captain }
+        au: { base_url: https://gbggo4-demo-au.nonprod.fabric.gbgplatforms.com/v2/captain }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-demo.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_CAPTAIN_V2_DEMO_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V2_DEMO_CLIENT_SECRET
+        username_env: GGO_CAPTAIN_V2_DEMO_USERNAME
+        password_env: GGO_CAPTAIN_V2_DEMO_PASSWORD
+        scope: openid
+    prod:
+      regions:
+        eu: { base_url: https://eu.platform.go.gbgplc.com/v2/captain }
+        us: { base_url: https://us.platform.go.gbgplc.com/v2/captain }
+        au: { base_url: https://au.platform.go.gbgplc.com/v2/captain }
+      auth:
+        grant_type: password
+        token_url: https://eu.platform.go.gbgplc.com/auth/realms/go/protocol/openid-connect/token   # confirm with ops
+        client_id_env: GGO_CAPTAIN_V2_PROD_CLIENT_ID
+        client_secret_env: GGO_CAPTAIN_V2_PROD_CLIENT_SECRET
+        username_env: GGO_CAPTAIN_V2_PROD_USERNAME
+        password_env: GGO_CAPTAIN_V2_PROD_PASSWORD
+        scope: openid
+
+designer:
+  envs:
+    dev:
+      regions:
+        eu: { base_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/designer/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-dev.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_DESIGNER_DEV_CLIENT_ID
+        client_secret_env: GGO_DESIGNER_DEV_CLIENT_SECRET
+        username_env: GGO_DESIGNER_DEV_USERNAME
+        password_env: GGO_DESIGNER_DEV_PASSWORD
+        scope: openid
+    demo:
+      regions:
+        eu: { base_url: https://gbggo4-demo-eu.nonprod.fabric.gbgplatforms.com/designer/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-demo.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_DESIGNER_DEMO_CLIENT_ID
+        client_secret_env: GGO_DESIGNER_DEMO_CLIENT_SECRET
+        username_env: GGO_DESIGNER_DEMO_USERNAME
+        password_env: GGO_DESIGNER_DEMO_PASSWORD
+        scope: openid
+    prod:
+      regions:
+        eu: { base_url: https://eu.platform.go.gbgplc.com/designer/api }
+      auth: null   # bearer-only: supply --token or GGO_BEARER_TOKEN
+
+userview:
+  envs:
+    dev:
+      regions:
+        eu: { base_url: https://gbggo4-dev-userview.nonprod.fabric.gbgplatforms.com/view/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-dev-userview.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_USERVIEW_DEV_CLIENT_ID
+        client_secret_env: GGO_USERVIEW_DEV_CLIENT_SECRET
+        username_env: GGO_USERVIEW_DEV_USERNAME
+        password_env: GGO_USERVIEW_DEV_PASSWORD
+        scope: openid
+    demo:
+      regions:
+        eu: { base_url: https://gbggo4-demo-eu.nonprod.fabric.gbgplatforms.com/view/api }
+        us: { base_url: https://gbggo4-demo-us.nonprod.fabric.gbgplatforms.com/view/api }
+        au: { base_url: https://gbggo4-demo-au.nonprod.fabric.gbgplatforms.com/view/api }
+      auth:
+        grant_type: password
+        token_url: https://gbggo4-demo.nonprod.fabric.gbgplatforms.com/auth/realms/go/protocol/openid-connect/token
+        client_id_env: GGO_USERVIEW_DEMO_CLIENT_ID
+        client_secret_env: GGO_USERVIEW_DEMO_CLIENT_SECRET
+        username_env: GGO_USERVIEW_DEMO_USERNAME
+        password_env: GGO_USERVIEW_DEMO_PASSWORD
+        scope: openid
+    prod:
+      regions:
+        eu: { base_url: https://eu.platform.go.gbgplc.com/view/api }
+        us: { base_url: https://us.platform.go.gbgplc.com/view/api }
+        au: { base_url: https://au.platform.go.gbgplc.com/view/api }
+      auth: null   # bearer-only: supply --token or GGO_BEARER_TOKEN

@@ -1,0 +1,18 @@
+name: image-draft-get
+description: Fetch a draft image by file name (binary response — non-binary endpoint variant).
+method: GET
+path: /{orgId}/image/draft/{id}/{fileName}
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: id
+    kind: string
+    description: Image draft ID.
+    example: "img-..."
+  - name: fileName
+    kind: string
+    description: File name.
+    example: "logo.png"

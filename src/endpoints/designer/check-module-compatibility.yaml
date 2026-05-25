@@ -1,0 +1,21 @@
+name: check-module-compatibility
+description: |
+  Check whether the given modules are compatible with a journey.
+  # TODO: verify path with upstream — body-defaults inventory references
+  # /resources/{orgId}/{type}/actions/credential as a candidate; the public
+  # endpoint name suggests a generic journey-actions route. Current path is a
+  # best-effort under /resources/{orgId}/journey/actions/.
+method: POST
+path: /resources/{orgId}/journey/actions/check-module-compatibility
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: modules
+    kind: json
+    description: JSON array of module identifiers.
+    example: '["mod1","mod2"]'
+body_template: |
+  { "modules": {{ modules | json_encode | safe }} }

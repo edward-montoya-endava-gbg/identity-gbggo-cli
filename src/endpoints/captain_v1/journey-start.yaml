@@ -1,0 +1,30 @@
+name: journey-start
+description: Start a Captain v1 journey for a customer.
+method: POST
+path: /journey/start
+auth: bearer
+required_vars:
+  - name: journeyId
+    kind: string
+    description: Designer journey UUID.
+    example: "9f1e..."
+  - name: externalId
+    kind: string
+    description: Caller-supplied external identifier for the journey run.
+    example: "ext-12345"
+optional_vars:
+  - name: locale
+    kind: string
+    description: BCP-47 locale tag.
+    default: "en-US"
+  - name: region
+    kind: string
+    description: Region hint passed to the server.
+    default: "EU"
+body_template: |
+  {
+    "journeyId": {{ journeyId | json_encode }},
+    "externalId": {{ externalId | json_encode }},
+    "locale": {{ locale | json_encode }},
+    "region": {{ region | json_encode }}
+  }

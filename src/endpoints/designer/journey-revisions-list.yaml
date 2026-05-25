@@ -1,0 +1,18 @@
+name: journey-revisions-list
+description: |
+  List resource revisions for an organisation and type.
+  Controller: @Get(':orgId/:type/revisions') under /resources prefix.
+method: GET
+path: /resources/{orgId}/{type}/revisions
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: type
+    kind: string
+    description: |
+      Resource type. One of: journey, delivery, brand, license, flow,
+      template, image, organization.
+    example: "journey"

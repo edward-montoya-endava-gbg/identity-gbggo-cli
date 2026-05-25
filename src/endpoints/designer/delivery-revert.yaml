@@ -1,0 +1,27 @@
+name: delivery-revert
+description: |
+  Revert a delivery to a previous revision.
+  # TODO: verify path with upstream — body-defaults inventory does not list a
+  # definitive path for delivery-revert; current path is a best-effort under
+  # /resources/{orgId}/delivery/actions/.
+method: POST
+path: /resources/{orgId}/delivery/actions/delivery-revert
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: deliveryId
+    kind: string
+    description: Delivery ID.
+    example: "4bc224a4..."
+  - name: revisionId
+    kind: string
+    description: Revision ID to revert to.
+    example: "rev-..."
+body_template: |
+  {
+    "deliveryId": {{ deliveryId | json_encode }},
+    "revisionId": {{ revisionId | json_encode }}
+  }

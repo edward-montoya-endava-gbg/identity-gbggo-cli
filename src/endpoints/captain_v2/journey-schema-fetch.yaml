@@ -1,0 +1,12 @@
+name: journey-schema-fetch
+description: Fetch the schema for a journey instance.
+method: POST
+path: /journey/schema/fetch
+auth: bearer
+required_vars:
+  - name: instanceId
+    kind: string
+    description: Journey instance ID.
+    example: "01HX..."
+body_template: |
+  { "instanceId": {{ instanceId | json_encode }} }

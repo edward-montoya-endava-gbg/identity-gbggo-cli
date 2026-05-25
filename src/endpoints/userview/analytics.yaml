@@ -1,0 +1,10 @@
+name: analytics
+description: Get a QuickSight presigned analytics URL.
+method: GET
+path: /{orgId}/analytics
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."

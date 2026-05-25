@@ -1,0 +1,14 @@
+name: get-audit-records
+description: |
+  Fetch paginated audit records for a project.
+  `project` is enum-restricted to one of: `designer`, `userview`.
+  Server defaults: page=1, pageSize=25 (max 100).
+method: GET
+path: /audit/{project}
+auth: bearer
+required_vars:
+  - name: project
+    kind: string
+    description: |
+      Audit project name. Enum-restricted: must be `designer` or `userview`.
+    example: "designer"

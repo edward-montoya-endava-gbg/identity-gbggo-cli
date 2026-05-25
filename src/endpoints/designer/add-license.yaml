@@ -1,0 +1,26 @@
+name: add-license
+description: |
+  Attach a license to a journey.
+  # TODO: verify path with upstream — body-defaults inventory does not provide
+  # a definitive path; current path mirrors the journey-actions best-effort.
+method: POST
+path: /resources/{orgId}/journey/actions/add-license
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: journeyId
+    kind: string
+    description: Journey ID.
+    example: "2cfe3ac73af566f4695624216a3cf92243c182ccf77e0537fdb6f992f59e8a41"
+  - name: licenseType
+    kind: string
+    description: License type identifier.
+    example: "premium"
+body_template: |
+  {
+    "journeyId": {{ journeyId | json_encode }},
+    "licenseType": {{ licenseType | json_encode }}
+  }

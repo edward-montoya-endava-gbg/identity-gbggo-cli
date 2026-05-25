@@ -1,0 +1,29 @@
+name: interaction-submit
+description: Submit domain element values from an end-user interaction.
+method: POST
+path: /interaction/submit
+auth: bearer
+required_vars:
+  - name: instanceId
+    kind: string
+    description: Journey instance ID.
+    example: "01HX..."
+  - name: interactionId
+    kind: string
+    description: Interaction ID being submitted.
+    example: "int-..."
+  - name: domainElements
+    kind: json
+    description: JSON array of domain element IDs being submitted.
+    example: '["firstName","lastName"]'
+  - name: data
+    kind: json
+    description: JSON object of domain element values keyed by ID.
+    example: '{"firstName":"Ada"}'
+body_template: |
+  {
+    "instanceId": {{ instanceId | json_encode }},
+    "interactionId": {{ interactionId | json_encode }},
+    "domainElements": {{ domainElements | json_encode | safe }},
+    "data": {{ data | json_encode | safe }}
+  }

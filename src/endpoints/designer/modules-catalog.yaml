@@ -1,0 +1,5 @@
+name: modules-catalog
+description: List the module catalog.
+method: GET
+path: /modules/catalog
+auth: bearer

@@ -1,0 +1,19 @@
+name: journey-device-connect
+description: Exchange a connect secret for an end-user token. Public endpoint.
+method: POST
+path: /journey/device/connect
+auth: none
+required_vars:
+  - name: secret
+    kind: string
+    description: One-time device connect secret.
+    example: "s-..."
+  - name: deviceId
+    kind: string
+    description: Device identifier.
+    example: "dev-..."
+body_template: |
+  {
+    "secret": {{ secret | json_encode }},
+    "deviceId": {{ deviceId | json_encode }}
+  }

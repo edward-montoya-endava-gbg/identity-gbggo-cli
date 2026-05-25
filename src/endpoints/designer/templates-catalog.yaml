@@ -1,0 +1,5 @@
+name: templates-catalog
+description: List the journey template catalog.
+method: GET
+path: /templates/catalog
+auth: bearer

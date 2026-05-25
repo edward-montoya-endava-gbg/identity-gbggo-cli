@@ -1,0 +1,10 @@
+name: partner-children
+description: List child organisations of a partner org.
+method: GET
+path: /partner/organisations/{orgId}/children
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Partner organisation ID.
+    example: "org-..."

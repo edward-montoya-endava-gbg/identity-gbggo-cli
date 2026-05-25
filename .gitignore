@@ -1,0 +1,16 @@
+/target
+**/*.rs.bk
+Cargo.lock.bak
+
+# Local secrets / config
+.env
+.env.*
+!.env.example
+regions.yaml
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store

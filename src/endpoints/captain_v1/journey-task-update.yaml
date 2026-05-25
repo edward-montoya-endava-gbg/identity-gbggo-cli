@@ -1,0 +1,33 @@
+name: journey-task-update
+description: |
+  Update a Captain v1 task (end-user token).
+  `intent` is enum-restricted to one of: `Save`, `Complete`, `Validate`.
+method: POST
+path: /journey/task/update
+auth: bearer
+required_vars:
+  - name: journeyId
+    kind: string
+    description: Designer journey UUID.
+    example: "9f1e..."
+  - name: taskId
+    kind: string
+    description: Task identifier.
+    example: "task-..."
+  - name: intent
+    kind: string
+    description: |
+      Task intent. Enum-restricted: must be one of `Save`, `Complete`,
+      `Validate` (from TaskIntent in Captain v1 model.ts).
+    example: "Validate"
+  - name: data
+    kind: json
+    description: Domain element values JSON object.
+    example: '{"answer":"yes"}'
+body_template: |
+  {
+    "journeyId": {{ journeyId | json_encode }},
+    "taskId": {{ taskId | json_encode }},
+    "intent": {{ intent | json_encode }},
+    "data": {{ data | json_encode | safe }}
+  }

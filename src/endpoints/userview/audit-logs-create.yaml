@@ -1,0 +1,34 @@
+name: audit-logs-create
+description: Create an audit log entry.
+method: POST
+path: /{orgId}/audit-logs
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "org-..."
+  - name: sessionId
+    kind: string
+    description: Journey session ID.
+    example: "sess-..."
+  - name: action
+    kind: string
+    description: Action name.
+    example: "review"
+optional_vars:
+  - name: notes
+    kind: string
+    description: Free-text notes.
+    default: ""
+  - name: metadata
+    kind: json
+    description: Optional metadata JSON object.
+    default: "{}"
+body_template: |
+  {
+    "sessionId": {{ sessionId | json_encode }},
+    "action": {{ action | json_encode }},
+    "notes": {{ notes | json_encode }},
+    "metadata": {{ metadata | json_encode | safe }}
+  }

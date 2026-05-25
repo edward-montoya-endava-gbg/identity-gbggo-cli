@@ -1,0 +1,33 @@
+name: journey-sessions-change-decision
+description: |
+  Change the decision on one or more journey sessions. The `decision` field is
+  enum-restricted to one of: `decision-accept`, `decision-reject`,
+  `decision-manual-review`.
+method: POST
+path: /{orgId}/journey-sessions/processing/changeDecision
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: journeySessionIds
+    kind: json
+    description: JSON array of journey session IDs.
+    example: '["sess-1","sess-2"]'
+  - name: decision
+    kind: string
+    description: |
+      Decision to apply. Enum-restricted: must be one of `decision-accept`,
+      `decision-reject`, or `decision-manual-review`.
+    example: "decision-accept"
+  - name: notes
+    kind: string
+    description: Free-text notes describing the decision change.
+    example: "manual review approved"
+body_template: |
+  {
+    "journeySessionIds": {{ journeySessionIds | json_encode | safe }},
+    "decision": {{ decision | json_encode }},
+    "notes": {{ notes | json_encode }}
+  }

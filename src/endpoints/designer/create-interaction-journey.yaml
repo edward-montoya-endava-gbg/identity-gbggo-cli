@@ -1,0 +1,20 @@
+name: create-interaction-journey
+description: |
+  Create an interaction-style journey via the Designer resources actions API.
+  # TODO: verify path with upstream — current path is inferred from inventory
+  # ("likely under /resources/{orgId}/journey/actions/create-interaction") and
+  # may differ from the running server.
+method: POST
+path: /resources/{orgId}/journey/actions/create-interaction
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: interactionData
+    kind: json
+    description: Interaction JSON payload.
+    example: '{}'
+body_template: |
+  { "interactionData": {{ interactionData | json_encode | safe }} }

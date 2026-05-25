@@ -1,0 +1,18 @@
+name: update-org-settings
+description: |
+  Update organisation settings. Renamed server-side from update-org-settings
+  to update-settings under /resources/{orgId}/organisation/actions/.
+method: POST
+path: /resources/{orgId}/organisation/actions/update-settings
+auth: bearer
+required_vars:
+  - name: orgId
+    kind: string
+    description: Organisation ID.
+    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+  - name: settings
+    kind: json
+    description: Settings JSON object (org-level configuration).
+    example: '{}'
+body_template: |
+  { "settings": {{ settings | json_encode | safe }} }

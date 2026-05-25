@@ -1,0 +1,25 @@
+name: device-start
+description: Generate a one-time connect token for device onboarding.
+method: POST
+path: /device/start
+auth: bearer
+required_vars:
+  - name: instanceId
+    kind: string
+    description: Journey instance ID.
+    example: "01HX..."
+optional_vars:
+  - name: ttlMinutes
+    kind: json
+    description: Token TTL in minutes (integer).
+    default: "5"
+  - name: scope
+    kind: string
+    description: Optional scope hint.
+    default: ""
+body_template: |
+  {
+    "instanceId": {{ instanceId | json_encode }},
+    "ttlMinutes": {{ ttlMinutes | json_encode | safe }},
+    "scope": {{ scope | json_encode }}
+  }
