@@ -1,0 +1,53 @@
+name: interaction-submit
+description: |
+  Submit data for a Captain v2 interaction. Body shape verified against
+  `submitInteractionBodySchema` in
+  identity-gbggo-platform/apps/captain/src/api/v2/shared/validation/schemas/journey.schemas.ts.
+
+  Required: `instanceId`, `interactionId`.
+  Optional: `context` (JourneyContext — same shape as journey-start; this is
+  where the data lives, e.g. `context.subject.documents[].side1Image`) and
+  `participants` (reviewer-flow only).
+
+  Like journey-start, you can use `--include identity <name>` /
+  `--include documents <name>` / `--include biometrics <name>` to overlay
+  fixtures into `context.subject.<category>`. The `outstanding` field from
+  `interaction-fetch` tells you what the journey is waiting for.
+auth: bearer
+supported_versions: [v2]
+versions:
+  v2:
+    method: POST
+    path: /journey/interaction/submit
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID (from journey-start).
+        example: "0_YnpSEXaVxEV7U_ldMTcF"
+      - name: interactionId
+        kind: string
+        description: |
+          Interaction ID being submitted (from interaction-fetch
+          `.interactionId`, e.g. `grn:::gbg:design:interaction:segment1@latest`).
+        example: "grn:::gbg:design:interaction:segment1@latest"
+    optional_vars:
+      - name: context
+        kind: json
+        description: |
+          JourneyContext. Typically supplied via `--include`. Defaults to `{}`.
+          Use `--include documents <name>` to populate
+          `context.subject.documents`, etc.
+        default: "{}"
+      - name: participants
+        kind: json
+        description: |
+          Optional participants array (reviewer flows). Each entry is
+          `{domainElementId?, instruction?}`. Defaults to omitted.
+        default: "[]"
+    body_template: |
+      {
+        "instanceId": {{ instanceId | json_encode }},
+        "interactionId": {{ interactionId | json_encode }},
+        "context": {{ context | json_encode | safe }},
+        "participants": {{ participants | json_encode | safe }}
+      }

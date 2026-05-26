@@ -1,22 +1,23 @@
 name: export-journey
 description: |
   Export a journey definition as JSON.
-  # TODO: verify path with upstream — current path may be incorrect. The
-  # body-defaults inventory does not provide a definitive path for export-journey
-  # under the /resources prefix; the legacy endpoint-inventory references
-  # /designer/api/:orgId/journey/actions/export-journey which conflicts with the
-  # newer /resources/{orgId}/... pattern.
+  Path + body verified against gong-forms ExportJourneyController:
+  `@Post(':orgId/journey/actions/export')` with `@Body() ExportJourneyDto { journeyId, version }`.
 method: POST
-path: /resources/{orgId}/journey/actions/export-journey
+path: /resources/{orgId}/journey/actions/export
 auth: bearer
 required_vars:
   - name: orgId
     kind: string
     description: Organisation ID.
-    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+    example: "gbg"
   - name: journeyId
     kind: string
     description: Journey ID.
-    example: "2cfe3ac73af566f4695624216a3cf92243c182ccf77e0537fdb6f992f59e8a41"
+    example: "00083914cdf93a2e7017a8dbf61b9082301b593167cd576ac8e6eba437fee85f"
+  - name: version
+    kind: string
+    description: Journey revision version string (e.g. "1xzsdevt"). Get from journey-revisions-list .history[].version.
+    example: "1xzsdevt"
 body_template: |
-  { "journeyId": {{ journeyId | json_encode }} }
+  { "journeyId": {{ journeyId | json_encode }}, "version": {{ version | json_encode }} }

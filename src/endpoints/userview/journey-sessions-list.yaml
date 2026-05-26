@@ -1,7 +1,10 @@
 name: journey-sessions-list
 description: |
-  List journey sessions for an organisation. Query params: page, perPage,
-  sortBy, filterBy, mode. Server defaults: page=1, perPage=20, mode=PRODUCTION.
+  List journey sessions for an organisation, newest first.
+  Query params: page, perPage, sortBy, filterBy, mode.
+  Defaults match the UserView UI: mode=PRE (test/dev data), sort by
+  startedDateTime desc, 25 per page. Pass --var mode=PROD to query
+  real customer sessions instead.
 method: GET
 path: /{orgId}/journey-sessions?page={page}&perPage={perPage}&sortBy={sortBy}&filterBy={filterBy}&mode={mode}
 auth: bearer
@@ -9,7 +12,7 @@ required_vars:
   - name: orgId
     kind: string
     description: Organisation ID.
-    example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
+    example: "gbg"
 optional_vars:
   - name: page
     kind: string
@@ -17,12 +20,12 @@ optional_vars:
     default: "1"
   - name: perPage
     kind: string
-    description: Records per page.
-    default: "20"
+    description: Records per page (max 100).
+    default: "25"
   - name: sortBy
     kind: string
-    description: Sort key (e.g. createdAt).
-    default: ""
+    description: Sort spec, format `field:asc|desc`.
+    default: "startedDateTime:desc"
   - name: filterBy
     kind: string
     description: Filter expression.
@@ -30,5 +33,6 @@ optional_vars:
   - name: mode
     kind: string
     description: |
-      Session mode. Typically `PRODUCTION` or `SANDBOX`.
-    default: "PRODUCTION"
+      Session mode. Enum: `PRE` (test/dev data, default) | `PROD`
+      (real customer sessions). Both should return data in dev.
+    default: "PRE"

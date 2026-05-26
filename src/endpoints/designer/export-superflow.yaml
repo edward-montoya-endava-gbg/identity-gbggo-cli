@@ -1,19 +1,29 @@
 name: export-superflow
 description: |
-  Export a superflow (multi-journey bundle).
-  # TODO: verify path with upstream — body-defaults inventory does not list a
-  # definitive path; current value mirrors the export-journey best-effort route.
+  Export a superflow (multi-journey bundle) for a delivery revision.
+  Path verified against gong-forms ExportSuperFlowController:
+  `@Post(':orgId/delivery/internal/actions/export/superflow')`.
+  Note this is under /delivery/internal/actions/, NOT /journey/actions/.
+  Body verified via export-superflow.controller.ts and DeliveryRevision interface.
 method: POST
-path: /resources/{orgId}/journey/actions/export-superflow
+path: /resources/{orgId}/delivery/internal/actions/export/superflow
 auth: bearer
 required_vars:
   - name: orgId
     kind: string
     description: Organisation ID.
     example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
-  - name: journeyId
+  - name: deliveryRevisionId
     kind: string
-    description: Journey ID.
-    example: "2cfe3ac73af566f4695624216a3cf92243c182ccf77e0537fdb6f992f59e8a41"
+    description: Delivery revision ID to export the superflow for.
+    example: "4bc224a4..."
+  - name: version
+    kind: string
+    description: |
+      Delivery revision version. MUST be the latest/head revision — older
+      revisions exist in history but the export action looks up the published
+      artifact and 404s on them. Pick `journey-revisions-list type=delivery`
+      and use `.resources[<id>].history[0].version`.
+    example: "1"
 body_template: |
-  { "journeyId": {{ journeyId | json_encode }} }
+  { "deliveryRevisionId": {{ deliveryRevisionId | json_encode }}, "version": {{ version | json_encode }} }

@@ -1,0 +1,23 @@
+name: interaction-fetch
+description: Fetch current interaction data (pages, cards) for a Captain v2 instance.
+auth: bearer
+supported_versions: [v2]
+versions:
+  v2:
+    method: POST
+    path: /journey/interaction/fetch
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "01HX..."
+    optional_vars:
+      - name: interactionId
+        kind: string
+        description: Optional specific interaction ID to fetch.
+        default: ""
+    body_template: |
+      {
+        "instanceId": {{ instanceId | json_encode }},
+        "interactionId": {{ interactionId | json_encode }}
+      }

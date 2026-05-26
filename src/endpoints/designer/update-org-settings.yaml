@@ -2,6 +2,8 @@ name: update-org-settings
 description: |
   Update organisation settings. Renamed server-side from update-org-settings
   to update-settings under /resources/{orgId}/organisation/actions/.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/organisation/actions/update-settings
 auth: bearer

@@ -1,10 +1,14 @@
 name: audit-project
 description: |
-  Fetch audit records for a project (paginated).
-  `project` is enum-restricted to one of: `designer`, `userview`.
-  `orgId` is required as a query param.
+  Fetch paginated audit records for a project. Path verified against gong-forms
+  GetAuditRecordsController (`@Controller('audit-logs') @Get(':orgId/:project')`).
+  Required: `orgId` (path) and `project` (path, enum: `designer` | `userview`).
+  Pagination: `page` (default 1) and `pageSize` (default 25, server cap 100).
+  Optional filters: `filterTimeFrom`, `filterTimeTo`, `filterUser`,
+  `filterJourneyId` (designer only), `filterSessionId` (userview only),
+  `filterAction`, and `seenPages` (JSON cursor map).
 method: GET
-path: /audit/{project}
+path: /audit-logs/{orgId}/{project}?page={page}&pageSize={pageSize}&filterTimeFrom={filterTimeFrom}&filterTimeTo={filterTimeTo}&filterUser={filterUser}&filterJourneyId={filterJourneyId}&filterSessionId={filterSessionId}&filterAction={filterAction}&seenPages={seenPages}
 auth: bearer
 required_vars:
   - name: project
@@ -12,3 +16,50 @@ required_vars:
     description: |
       Audit project name. Enum-restricted: must be `designer` or `userview`.
     example: "designer"
+  - name: orgId
+    kind: string
+    description: Organisation ID (path parameter).
+    example: "gbg"
+optional_vars:
+  - name: page
+    kind: string
+    description: Page number (1-indexed). Server default 1.
+    default: "1"
+  - name: pageSize
+    kind: string
+    description: Records per page. Server default 25, max 100 (silently clamped).
+    default: "25"
+  - name: filterTimeFrom
+    kind: string
+    description: Filter — start of time window (ISO-8601).
+    default: ""
+  - name: filterTimeTo
+    kind: string
+    description: Filter — end of time window (ISO-8601).
+    default: ""
+  - name: filterUser
+    kind: string
+    description: Filter by user identifier.
+    default: ""
+  - name: filterJourneyId
+    kind: string
+    description: |
+      Filter by journey ID. Accepted only when `project=designer`; mutually
+      exclusive with `filterSessionId`.
+    default: ""
+  - name: filterSessionId
+    kind: string
+    description: |
+      Filter by journey session ID. Accepted only when `project=userview`;
+      mutually exclusive with `filterJourneyId`.
+    default: ""
+  - name: filterAction
+    kind: string
+    description: Filter by audit action name.
+    default: ""
+  - name: seenPages
+    kind: string
+    description: |
+      Pagination cursor map as JSON string — `Record<pageNumber, pageToken>`.
+      Used by the FE to forward Auditum cursors between page jumps.
+    default: ""

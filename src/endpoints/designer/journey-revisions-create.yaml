@@ -2,6 +2,8 @@ name: journey-revisions-create
 description: |
   Create a new resource revision for an organisation.
   Controller: @Post(':orgId/:type/revisions') under /resources prefix.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/{type}/revisions
 auth: bearer

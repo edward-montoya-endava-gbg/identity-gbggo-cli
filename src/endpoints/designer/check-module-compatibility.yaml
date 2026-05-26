@@ -1,10 +1,10 @@
 name: check-module-compatibility
 description: |
-  Check whether the given modules are compatible with a journey.
-  # TODO: verify path with upstream — body-defaults inventory references
-  # /resources/{orgId}/{type}/actions/credential as a candidate; the public
-  # endpoint name suggests a generic journey-actions route. Current path is a
-  # best-effort under /resources/{orgId}/journey/actions/.
+  Check whether the given flow nodes are compatible with a journey.
+  Path verified against gong-forms CheckModuleCompatibilityController:
+  `@Post(':orgId/journey/actions/check-module-compatibility')`.
+  Body verified via CheckModuleCompatibilityDto — the array key is `nodes`
+  (max 200), each entry being a journey flow-graph node (FlowNodeDto).
 method: POST
 path: /resources/{orgId}/journey/actions/check-module-compatibility
 auth: bearer
@@ -13,9 +13,11 @@ required_vars:
     kind: string
     description: Organisation ID.
     example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
-  - name: modules
+  - name: nodes
     kind: json
-    description: JSON array of module identifiers.
-    example: '["mod1","mod2"]'
+    description: |
+      JSON array of journey flow-graph nodes (FlowNodeDto[]). Max 200 entries.
+      Each node is a module/flow node from the journey definition.
+    example: '[]'
 body_template: |
-  { "modules": {{ modules | json_encode | safe }} }
+  { "nodes": {{ nodes | json_encode | safe }} }

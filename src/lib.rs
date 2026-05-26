@@ -6,5 +6,6 @@ pub mod config;
 pub mod endpoints;
 pub mod error;
 pub mod exec;
+pub mod fixtures;
 pub mod output;
 pub mod render;

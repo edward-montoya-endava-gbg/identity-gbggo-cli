@@ -23,22 +23,31 @@ pub enum AuthSource {
     },
 }
 
-/// Pick the auth source for a given endpoint + target + caller bearer override.
-///
-/// Precedence:
-/// 1. `endpoint.auth == None` → `AuthSource::None` (bypasses everything else).
-/// 2. Caller-supplied bearer (`--token` or `GGO_BEARER_TOKEN`) → validate + use.
-/// 3. `target.auth: None` (config says bearer-only) → error unless step 2 caught it.
-/// 4. Configured OAuth2 → run grant.
+/// Pick the auth source given an endpoint manifest + target + caller bearer override.
 pub fn pick_source(
     endpoint: &EndpointDef,
     target: &ResolvedTarget,
     bearer_override: Option<&str>,
 ) -> CliResult<AuthSource> {
-    if matches!(endpoint.auth, EndpointAuth::None) {
+    pick_source_with_auth(&endpoint.auth, target, bearer_override)
+}
+
+/// Pick the auth source given a service-level `Auth` (Bearer/None) + target +
+/// caller bearer override. Used by the exec layer where the auth lives on the
+/// EndpointDef itself (not the per-version block).
+///
+/// Precedence:
+/// 1. `auth == None` → `AuthSource::None` (bypasses everything else).
+/// 2. Caller-supplied bearer (`--token` or `GGO_BEARER_TOKEN`) → validate + use.
+/// 3. `target.auth: None` (config says bearer-only) → error unless step 2 caught it.
+/// 4. Configured OAuth2 → run grant.
+pub fn pick_source_with_auth(
+    endpoint_auth: &EndpointAuth,
+    target: &ResolvedTarget,
+    bearer_override: Option<&str>,
+) -> CliResult<AuthSource> {
+    if matches!(endpoint_auth, EndpointAuth::None) {
         // Endpoint is `auth: none`, so no Authorization header will be sent.
-        // But if the caller passed a `--token`, surface a clear error when it is
-        // obviously expired — silently dropping a broken token hides bugs.
         if let Some(token) = bearer_override {
             if let Ok(exp) = bearer::extract_exp(token) {
                 let now = std::time::SystemTime::now()
@@ -51,7 +60,6 @@ pub fn pick_source(
                     )));
                 }
             }
-            // Unparseable-but-valid-shape, or future exp: short-circuit silently to None.
         }
         return Ok(AuthSource::None);
     }

@@ -2,6 +2,8 @@ name: launch-flow
 description: |
   Launch a delivery instance in Captain via Designer's delivery action.
   `region` is a path suffix (defaults to `EU`). Enum: EU, US, APAC.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/delivery/actions/start/{region}
 auth: bearer

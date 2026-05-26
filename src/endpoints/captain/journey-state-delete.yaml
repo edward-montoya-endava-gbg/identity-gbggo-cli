@@ -1,0 +1,32 @@
+name: journey-state-delete
+description: Delete state of a Captain journey instance (destructive).
+auth: bearer
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/state/delete
+    required_vars:
+      - name: journeyId
+        kind: string
+        description: Designer journey UUID.
+        example: "9f1e..."
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "inst-..."
+    body_template: |
+      {
+        "journeyId": {{ journeyId | json_encode }},
+        "instanceId": {{ instanceId | json_encode }}
+      }
+  v2:
+    method: POST
+    path: /journey/state/delete
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "01HX..."
+    body_template: |
+      { "instanceId": {{ instanceId | json_encode }} }

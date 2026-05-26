@@ -1,0 +1,5 @@
+# documents fixture — two-sided document scenario (front + back).
+# Captain's `context.subject.documents` is an array; this entry carries both
+# `side1Image` (front) and `side2Image` (back).
+- side1Image: "@file:images/document.b64"
+  side2Image: "@file:images/document.b64"

@@ -1,0 +1,5 @@
+# biometrics fixture — Captain's `context.subject.biometrics` is an array.
+# Each entry has `selfieImage` (base64 face photo) + `anchorImage` (base64
+# reference image, typically the document the selfie is compared against).
+- selfieImage: "@file:images/faceImage.b64"
+  anchorImage: "@file:images/document.b64"

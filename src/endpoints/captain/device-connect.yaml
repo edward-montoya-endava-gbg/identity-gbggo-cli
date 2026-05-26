@@ -1,0 +1,34 @@
+name: device-connect
+description: |
+  Exchange a one-time connect secret/token for an end-user JWT. Public endpoint
+  (auth: none) for both versions.
+auth: none
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/device/connect
+    required_vars:
+      - name: secret
+        kind: string
+        description: One-time device connect secret.
+        example: "s-..."
+      - name: deviceId
+        kind: string
+        description: Device identifier.
+        example: "dev-..."
+    body_template: |
+      {
+        "secret": {{ secret | json_encode }},
+        "deviceId": {{ deviceId | json_encode }}
+      }
+  v2:
+    method: POST
+    path: /journey/device/connect
+    required_vars:
+      - name: connectToken
+        kind: string
+        description: One-time connect token from device/start.
+        example: "ctk-..."
+    body_template: |
+      { "connectToken": {{ connectToken | json_encode }} }

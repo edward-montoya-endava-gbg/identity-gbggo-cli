@@ -1,5 +1,7 @@
 name: audit-logs-create
 description: Create an audit log entry.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /{orgId}/audit-logs
 auth: bearer

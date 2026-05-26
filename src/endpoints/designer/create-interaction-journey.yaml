@@ -4,6 +4,8 @@ description: |
   # TODO: verify path with upstream — current path is inferred from inventory
   # ("likely under /resources/{orgId}/journey/actions/create-interaction") and
   # may differ from the running server.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/create-interaction
 auth: bearer

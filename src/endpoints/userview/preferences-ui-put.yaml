@@ -1,5 +1,7 @@
 name: preferences-ui-put
 description: Replace UI preferences for the organisation.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: PUT
 path: /{orgId}/preferences/ui
 auth: bearer

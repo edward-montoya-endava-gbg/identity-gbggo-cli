@@ -1,0 +1,33 @@
+name: device-validate
+description: |
+  Validate a device credential (v1) or session token (v2).
+auth: bearer
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/device/validate
+    required_vars:
+      - name: credential
+        kind: string
+        description: Credential value to validate.
+        example: "cred-..."
+      - name: type
+        kind: string
+        description: Credential type.
+        example: "device-jwt"
+    body_template: |
+      {
+        "credential": {{ credential | json_encode }},
+        "type": {{ type | json_encode }}
+      }
+  v2:
+    method: POST
+    path: /journey/device/validate
+    required_vars:
+      - name: token
+        kind: string
+        description: End-user JWT to validate.
+        example: "eyJhbGciOi..."
+    body_template: |
+      { "token": {{ token | json_encode }} }

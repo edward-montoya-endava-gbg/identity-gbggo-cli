@@ -2,7 +2,7 @@
 
 use crate::auth::{self, AuthSource};
 use crate::config::RegionsConfig;
-use crate::endpoints::{Catalog, EndpointDef};
+use crate::endpoints::{Catalog, EndpointBody, EndpointView};
 use crate::error::{CliError, CliResult, ExitKind};
 use crate::output;
 use crate::render;
@@ -21,6 +21,9 @@ pub struct ExecInputs<'a> {
     pub dry_run: bool,
     pub confirm: bool,
     pub want_table: bool,
+    /// Versioned-service version override from `--api-version`. Ignored for
+    /// flat (non-versioned) services.
+    pub api_version: Option<&'a str>,
 }
 
 pub async fn run(
@@ -35,7 +38,83 @@ pub async fn run(
         ))
     })?;
 
+    // Resolve target up front so we can consult `default_version` from
+    // regions.yaml during version resolution.
     let mut target = config.resolve(inputs.service, inputs.env, inputs.region)?;
+
+    // Resolve version (versioned endpoints only).
+    let resolved_version: Option<String> = match &endpoint.body {
+        EndpointBody::Flat(_) => None,
+        EndpointBody::Versioned(vb) => {
+            let chosen = resolve_version(
+                inputs.service,
+                &endpoint.name,
+                &vb.supported_versions,
+                inputs.api_version,
+                target.default_version.as_deref(),
+            )?;
+            Some(chosen)
+        }
+    };
+
+    // Build the per-version view used by render/auth/HTTP.
+    let view = endpoint
+        .resolve_version(resolved_version.as_deref())
+        .ok_or_else(|| {
+            CliError::config(format!(
+                "internal: failed to materialize endpoint view for {}/{}",
+                inputs.service, endpoint.name
+            ))
+        })?;
+
+    // Disabled-endpoint gate. Runs BEFORE auth / var resolution / --dry-run.
+    if view.disabled {
+        let reason = view.disabled_reason.unwrap_or("disabled");
+        let svc_dir = inputs.service.replace('-', "_");
+        let hint = match view.version {
+            Some(v) => format!(
+                "edit src/endpoints/{}/{}.yaml and remove `disabled: true` under `versions.{}`, then run `cargo install --path . --force`",
+                svc_dir, endpoint.name, v
+            ),
+            None => format!(
+                "edit src/endpoints/{}/{}.yaml and remove `disabled: true`, then run `cargo install --path . --force`",
+                svc_dir, endpoint.name
+            ),
+        };
+        return Err(CliError::usage(format!(
+            "endpoint `{}/{}` is disabled: {}. To enable, {}.",
+            inputs.service, endpoint.name, reason, hint
+        )));
+    }
+
+    // Deprecation warning — emit once, do not fail.
+    if let Some(reason) = view.deprecated {
+        if let Some(v) = view.version {
+            tracing::warn!(
+                "{}/{} version {} is deprecated: {}",
+                inputs.service,
+                endpoint.name,
+                v,
+                reason
+            );
+        }
+    }
+
+    // Pick the right base_url for the resolved version.
+    let base_url = target
+        .urls
+        .pick(resolved_version.as_deref())
+        .ok_or_else(|| match resolved_version.as_deref() {
+            Some(v) => CliError::config(format!(
+                "regions.yaml `{}.{}.regions.{}.base_urls` has no entry for version `{}`",
+                inputs.service, inputs.env, target.region, v
+            )),
+            None => CliError::config(format!(
+                "regions.yaml `{}.{}.regions.{}` has no base_url",
+                inputs.service, inputs.env, target.region
+            )),
+        })?
+        .to_string();
 
     // Apply --token-url override (only meaningful when an OAuth source will be used).
     if let Some(url) = &inputs.token_url_override {
@@ -58,17 +137,17 @@ pub async fn run(
     // Pick auth source FIRST so the bearer-only prod gate fires before any var/env
     // read (per the spec contract).
     let bearer_override = inputs.bearer_override.as_deref();
-    let source = auth::pick_source(endpoint, &target, bearer_override)?;
+    let source = auth::pick_source_with_auth(&endpoint.auth, &target, bearer_override)?;
 
     // Required-var enforcement and JSON validation happens here, BEFORE network/HTTP.
-    let vars = render::resolve_vars(endpoint, &inputs.vars)?;
-    let body = render::render_body(endpoint, &vars)?;
+    let vars = render::resolve_vars(&view, &inputs.vars)?;
+    let body = render::render_body(&view, &vars)?;
 
     // Path substitution: any `{name}` literal in the path is replaced with the
     // string-typed var value (URL-path-encoded).
-    let path = render::substitute_path(&endpoint.path, &vars)?;
-    let url = format!("{}{}", target.base_url, path);
-    let method = endpoint.method.to_ascii_uppercase();
+    let path = render::substitute_path(view.path, &vars)?;
+    let url = format!("{}{}", base_url, path);
+    let method = view.method.to_ascii_uppercase();
 
     // Prod write gate: any non-GET against prod requires --confirm UNLESS --dry-run is set.
     let is_write = !matches!(method.as_str(), "GET" | "HEAD" | "OPTIONS");
@@ -100,14 +179,51 @@ pub async fn run(
         auth_header.as_deref(),
         body.as_deref(),
         inputs.want_table,
-        endpoint,
     )
     .await
 }
 
+/// Resolve which version to use for a versioned endpoint.
+///
+/// Order:
+/// 1. explicit `--api-version` flag (always wins when supplied);
+/// 2. if the endpoint has exactly one supported version → that version (no
+///    further consultation — avoids the footgun where a global
+///    `default_version: v2` collides with a v1-only endpoint);
+/// 3. regions.yaml `default_version` (only when the endpoint genuinely
+///    supports multiple versions and no flag was supplied);
+/// 4. error listing the supported versions.
+fn resolve_version(
+    service: &str,
+    name: &str,
+    supported: &[String],
+    flag: Option<&str>,
+    default_version: Option<&str>,
+) -> CliResult<String> {
+    let chosen = if let Some(v) = flag {
+        v.to_string()
+    } else if supported.len() == 1 {
+        supported[0].clone()
+    } else if let Some(v) = default_version {
+        v.to_string()
+    } else {
+        return Err(CliError::usage(format!(
+            "endpoint `{service}/{name}` exists in versions [{}]; pass --api-version or set default_version in regions.yaml",
+            supported.join(", ")
+        )));
+    };
+
+    if !supported.contains(&chosen) {
+        return Err(CliError::usage(format!(
+            "endpoint `{service}/{name}` does not support version `{chosen}`; available: [{}]",
+            supported.join(", ")
+        )));
+    }
+
+    Ok(chosen)
+}
+
 /// Idempotent HTTP methods are safe to retry on transient failure.
-/// Per spec Loopback #2: retry only fires for GET/HEAD/OPTIONS. All other
-/// methods (POST/PUT/PATCH/DELETE) fail-fast to prevent silent double-execute.
 fn is_idempotent(method: &str) -> bool {
     method.eq_ignore_ascii_case("GET")
         || method.eq_ignore_ascii_case("HEAD")
@@ -121,10 +237,7 @@ async fn do_request(
     auth_header: Option<&str>,
     body: Option<&str>,
     want_table: bool,
-    _endpoint: &EndpointDef,
 ) -> CliResult<()> {
-    // One-retry path is gated on idempotent methods only. For non-idempotent
-    // methods, the first failure (5xx or network) is the final answer.
     let retry_allowed = is_idempotent(method);
     let mut attempt: u8 = 0;
     loop {
@@ -192,4 +305,15 @@ async fn do_request(
             }
         }
     }
+}
+
+// Unused helper retained for tests that look up an EndpointView for a service+command+version.
+#[allow(dead_code)]
+pub fn lookup_view<'a>(
+    catalog: &'a Catalog,
+    service: &str,
+    command: &str,
+    version: Option<&str>,
+) -> Option<EndpointView<'a>> {
+    catalog.get(service, command)?.resolve_version(version)
 }

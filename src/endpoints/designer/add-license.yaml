@@ -3,6 +3,8 @@ description: |
   Attach a license to a journey.
   # TODO: verify path with upstream — body-defaults inventory does not provide
   # a definitive path; current path mirrors the journey-actions best-effort.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/add-license
 auth: bearer

@@ -1,0 +1,38 @@
+name: device-start
+description: |
+  Start a device session (Captain v1) or generate a one-time connect token for
+  device onboarding (Captain v2).
+auth: bearer
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/device/start
+    required_vars:
+      - name: deviceType
+        kind: string
+        description: Device type identifier.
+        example: "mobile"
+    body_template: |
+      { "deviceType": {{ deviceType | json_encode }} }
+  v2:
+    method: POST
+    path: /journey/device/start
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "01HX..."
+    optional_vars:
+      - name: scope
+        kind: json
+        description: |
+          Array of DeviceStartScope values (see Captain schema). Defaults to `[]`
+          (server picks the default scope). Per schema, the field is optional
+          but if present MUST be an array.
+        default: "[]"
+    body_template: |
+      {
+        "instanceId": {{ instanceId | json_encode }},
+        "scope": {{ scope | safe }}
+      }

@@ -1,0 +1,15 @@
+name: journey-terminate
+description: Terminate a running Captain v2 journey instance.
+auth: bearer
+supported_versions: [v2]
+versions:
+  v2:
+    method: POST
+    path: /journey/terminate
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "01HX..."
+    body_template: |
+      { "instanceId": {{ instanceId | json_encode }} }

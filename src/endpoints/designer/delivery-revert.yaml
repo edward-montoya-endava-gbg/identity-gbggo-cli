@@ -4,6 +4,8 @@ description: |
   # TODO: verify path with upstream — body-defaults inventory does not list a
   # definitive path for delivery-revert; current path is a best-effort under
   # /resources/{orgId}/delivery/actions/.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/delivery/actions/delivery-revert
 auth: bearer

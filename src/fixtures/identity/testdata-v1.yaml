@@ -1,0 +1,9 @@
+# identity fixture — real-world shape used by GBG GO journeys.
+# Schema: firstName (string), middleNames (array), lastNames (array), dateOfBirth (YYYY-MM-DD).
+# This is the canonical happy-path test identity (Māori name).
+firstName: "AROHA"
+middleNames:
+  - "MERE TERESA"
+lastNames:
+  - "WATA"
+dateOfBirth: "1990-10-01"

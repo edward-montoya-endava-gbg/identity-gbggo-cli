@@ -1,0 +1,4 @@
+# documents fixture — minimal (one document, single-side image).
+# Captain's `context.subject.documents` is an array; each entry has at least
+# `side1Image` (base64 JPEG/PNG). `side2Image` is optional for two-sided docs.
+- side1Image: "@file:images/document.b64"

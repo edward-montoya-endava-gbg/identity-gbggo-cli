@@ -2,6 +2,8 @@ name: unarchive-journey
 description: |
   Restore an archived journey. Renamed server-side from `unarchive-journey`
   to `unarchive` under /resources/{orgId}/journey/actions/.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/unarchive
 auth: bearer

@@ -1,0 +1,67 @@
+name: journey-start
+description: |
+  Start a customer journey instance.
+
+  Both v1 and v2 take a `resourceId` (format `{grId}@{version}`) plus a JSON
+  `context` object. The difference is server-side validation of `context.config`:
+  - v1: `context.config` is OPTIONAL.
+  - v2: `context.config.delivery` is REQUIRED (string).
+
+  Body shape (both versions):
+    {
+      "resourceId": "<grId>@<version>",
+      "context": {
+        "subject": { identity, identities?, documents?, biometrics?, sessions?, consent?, uid? },
+        "config": { delivery: "<id>", ... }   # required for v2, optional for v1
+      }
+    }
+
+  Use `--include identity <name>` / `--include documents <name>` /
+  `--include biometrics <name>` to overlay built-in fixtures into
+  `context.subject.<category>`. See `goctl list-fixtures`.
+auth: bearer
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/start
+    required_vars:
+      - name: resourceId
+        kind: string
+        description: |
+          Published journey resource. Format `{grId}@{version}`.
+        example: "3980bb86dd84a8636d632c3e4b365741e7c17b4cc3596958bad06353562be698@1atcr6m7"
+      - name: context
+        kind: json
+        description: |
+          JSON context. For v1, `context.config` is optional. Typically supplied
+          via `--include identity/documents/biometrics` or `--var context=@file.json`.
+        example: |
+          {"subject":{"identity":{"firstName":"AROHA","middleNames":["MERE TERESA"],"lastNames":["WATA"],"dateOfBirth":"1990-10-01"}}}
+    body_template: |
+      {
+        "resourceId": {{ resourceId | json_encode }},
+        "context": {{ context | json_encode | safe }}
+      }
+  v2:
+    method: POST
+    path: /journey/start
+    required_vars:
+      - name: resourceId
+        kind: string
+        description: |
+          Journey resource ID. Captain v2 format: `{grId}@{version}`.
+        example: "7bf6a284b880050663d1a2778a3a2ceca4573708bd9e6fadba5a7bae6c3c80bb@1edc50mp"
+      - name: context
+        kind: json
+        description: |
+          Initial JSON context. v2 REQUIRES `context.config.delivery` (string).
+          Typical shape:
+          `{config:{delivery:"<id>"}, subject:{identity:{...}}}`.
+        example: |
+          {"config":{"delivery":"api"},"subject":{"identity":{"firstName":"JOHN","lastNames":["smith"],"dateOfBirth":"1987-01-12"}}}
+    body_template: |
+      {
+        "resourceId": {{ resourceId | json_encode }},
+        "context": {{ context | json_encode | safe }}
+      }

@@ -2,6 +2,8 @@ name: create-journey
 description: |
   Create a new journey from flow data (and optional template metadata).
   Requires action:create on the journey resource.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/create-journey
 auth: bearer

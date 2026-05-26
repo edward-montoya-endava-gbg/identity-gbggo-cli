@@ -3,6 +3,8 @@ description: |
   Change the decision on one or more journey sessions. The `decision` field is
   enum-restricted to one of: `decision-accept`, `decision-reject`,
   `decision-manual-review`.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /{orgId}/journey-sessions/processing/changeDecision
 auth: bearer

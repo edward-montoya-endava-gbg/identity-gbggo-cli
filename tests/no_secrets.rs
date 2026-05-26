@@ -66,7 +66,15 @@ designer:
 "#;
     let tf = write_tmp(yaml);
     let err = RegionsConfig::load_from(tf.path()).unwrap_err();
-    assert!(err.to_string().contains("unknown field"), "got: {}", err);
+    let msg = err.to_string();
+    // Region rows are an untagged union of `Single { base_url }` and
+    // `PerVersion { base_urls }` (each `deny_unknown_fields`). A stray
+    // `token:` paste does not match either variant — serde surfaces this as
+    // "data did not match any variant ...". Either phrasing is acceptable.
+    assert!(
+        msg.contains("unknown field") || msg.contains("did not match"),
+        "got: {msg}"
+    );
 }
 
 #[test]

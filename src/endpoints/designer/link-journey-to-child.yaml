@@ -1,6 +1,8 @@
 name: link-journey-to-child
 description: |
   Link a parent journey to a child journey in another organisation.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/link-journey-to-child
 auth: bearer

@@ -30,11 +30,12 @@ async fn captain_v2_journey_start_includes_bearer_header() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -54,7 +55,7 @@ captain-v2:
             "context={\"k\":\"v\"}",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-start",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -82,11 +83,12 @@ async fn captain_v2_journey_start_e2e_relaxed() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -106,7 +108,7 @@ captain-v2:
             "context={\"k\":\"v\"}",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-start",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -134,11 +136,12 @@ async fn idempotent_get_retries_once_on_5xx_then_returns_2xx() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -151,7 +154,7 @@ captain-v2:
             cfg.path().to_str().unwrap(),
             "--env",
             "demo",
-            "captain-v2",
+            "captain",
             "version",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -179,11 +182,12 @@ async fn non_idempotent_post_does_not_retry() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -203,7 +207,7 @@ captain-v2:
             "context={\"k\":\"v\"}",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-start",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -226,11 +230,12 @@ async fn upstream_4xx_includes_request_id_and_body() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -248,7 +253,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -269,11 +274,12 @@ async fn json_errors_emits_structured_object() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -292,7 +298,7 @@ captain-v2:
             "--token",
             &jwt,
             "--json-errors",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -314,11 +320,12 @@ async fn network_failure_to_dead_port_exits_5() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: http://{} }}
+        eu: {{ base_urls: {{ v2: http://{} }} }}
       auth: null
 "#,
         addr
@@ -337,7 +344,7 @@ captain-v2:
             "--token",
             &jwt,
             "--json-errors",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")

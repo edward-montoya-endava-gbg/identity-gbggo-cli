@@ -1,6 +1,8 @@
 name: unlink-journey
 description: |
   Remove a parent-child link between organisations for a journey.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/journey/actions/unlink-journey
 auth: bearer

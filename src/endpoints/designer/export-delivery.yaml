@@ -1,7 +1,10 @@
 name: export-delivery
 description: |
   Export a delivery (and linked journey) for backup or migration.
-  Uses the /delivery/internal/actions/export path per body-defaults inventory.
+  Uses the /delivery/internal/actions/export path per gong-forms
+  ExportDeliveryController.
+  # Body verified via export-delivery.controller.ts and its DTO
+  # (DeliveryRevision { deliveryRevisionId, version } from actions.interface.ts).
 method: POST
 path: /resources/{orgId}/delivery/internal/actions/export
 auth: bearer
@@ -10,9 +13,17 @@ required_vars:
     kind: string
     description: Organisation ID.
     example: "b0f48b6d-2ff7-458e-874b-ee10d686f6bb"
-  - name: deliveryId
+  - name: deliveryRevisionId
     kind: string
-    description: Delivery ID.
+    description: Delivery revision ID to export.
     example: "4bc224a4..."
+  - name: version
+    kind: string
+    description: |
+      Delivery revision version. MUST be the latest/head revision — older
+      revisions exist in history but the export action looks up the published
+      artifact and 404s on them. Pick `journey-revisions-list type=delivery`
+      and use `.resources[<id>].history[0].version`.
+    example: "1"
 body_template: |
-  { "deliveryId": {{ deliveryId | json_encode }} }
+  { "deliveryRevisionId": {{ deliveryRevisionId | json_encode }}, "version": {{ version | json_encode }} }

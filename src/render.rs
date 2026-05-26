@@ -5,15 +5,13 @@
 //! - `kind: json` vars validated via `serde_json::from_str` before substitution.
 //! - String-typed vars use Tera's built-in `json_encode` filter which emits the quotes.
 
-use crate::endpoints::{EndpointDef, VarKind};
+use crate::endpoints::{EndpointView, VarKind};
 use crate::error::{CliError, CliResult};
 use percent_encoding::{AsciiSet, CONTROLS};
 use std::collections::BTreeMap;
 use tera::{Context, Tera, Value};
 
 /// Characters that must be percent-encoded inside a URL path segment.
-/// Extends `CONTROLS` (0x00-0x1F, 0x7F) with the URL-reserved/gen-delims/sub-delims
-/// and other unsafe bytes that would corrupt the upstream URL if left raw.
 const PATH_ENCODE_SET: &AsciiSet = &CONTROLS
     .add(b' ')
     .add(b'"')
@@ -51,15 +49,15 @@ pub enum ResolvedValue {
     Json(Value),
 }
 
-/// Resolve and validate every variable referenced by an endpoint.
+/// Resolve and validate every variable referenced by an endpoint view.
 pub fn resolve_vars(
-    endpoint: &EndpointDef,
+    view: &EndpointView<'_>,
     cli_vars: &BTreeMap<String, String>,
 ) -> CliResult<ResolvedVars> {
     let mut out: BTreeMap<String, ResolvedValue> = BTreeMap::new();
     let mut missing: Vec<String> = Vec::new();
 
-    for r in &endpoint.required_vars {
+    for r in view.required_vars {
         match resolve_one(&r.name, r.kind, cli_vars, None)? {
             Some(v) => {
                 out.insert(r.name.clone(), v);
@@ -74,7 +72,7 @@ pub fn resolve_vars(
             missing[0].to_ascii_uppercase()
         )));
     }
-    for o in &endpoint.optional_vars {
+    for o in view.optional_vars {
         if let Some(v) = resolve_one(&o.name, o.kind, cli_vars, o.default.as_deref())? {
             out.insert(o.name.clone(), v);
         }
@@ -114,8 +112,8 @@ fn resolve_one(
 }
 
 /// Render the body template using Tera, with `json_encode` available natively.
-pub fn render_body(endpoint: &EndpointDef, vars: &ResolvedVars) -> CliResult<Option<String>> {
-    let Some(tmpl_src) = &endpoint.body_template else {
+pub fn render_body(view: &EndpointView<'_>, vars: &ResolvedVars) -> CliResult<Option<String>> {
+    let Some(tmpl_src) = view.body_template else {
         return Ok(None);
     };
 
@@ -136,8 +134,7 @@ pub fn render_body(endpoint: &EndpointDef, vars: &ResolvedVars) -> CliResult<Opt
         .render("body", &ctx)
         .map_err(|e| CliError::config(format!("body_template render error: {e}")))?;
 
-    // Validate the rendered output is itself parseable JSON. This catches manifest authors
-    // who forget surrounding braces, mis-quote, etc.
+    // Validate the rendered output is itself parseable JSON.
     if let Err(e) = serde_json::from_str::<Value>(&rendered) {
         return Err(CliError::config(format!(
             "rendered body is not valid JSON: {e}; rendered: {}",
@@ -149,7 +146,6 @@ pub fn render_body(endpoint: &EndpointDef, vars: &ResolvedVars) -> CliResult<Opt
 }
 
 /// Substitute `{name}` path placeholders with the corresponding string-typed var value.
-/// `kind: json` vars cannot be used in paths.
 pub fn substitute_path(path: &str, vars: &ResolvedVars) -> CliResult<String> {
     let mut out = String::with_capacity(path.len());
     let bytes = path.as_bytes();
@@ -172,9 +168,6 @@ pub fn substitute_path(path: &str, vars: &ResolvedVars) -> CliResult<String> {
             })?;
             match v {
                 ResolvedValue::Str(s) => {
-                    // Percent-encode using a broad encode set covering control chars,
-                    // URL-reserved sub-delims (& ; = +), gen-delims (# ? / : @),
-                    // and bytes that would otherwise break upstream URL parsing.
                     let encoded =
                         percent_encoding::utf8_percent_encode(s, PATH_ENCODE_SET).to_string();
                     out.push_str(&encoded);

@@ -1,5 +1,7 @@
 name: journey-sessions-delete
 description: Delete a journey session.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: DELETE
 path: /{orgId}/journey-sessions/{id}
 auth: bearer

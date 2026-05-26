@@ -101,11 +101,12 @@ async fn password_grant_body_shape() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth:
         grant_type: password
         token_url: {base}/token
@@ -126,7 +127,7 @@ captain-v2:
             "demo",
             "--var",
             "instanceId=i1",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env("GGO_TEST_CLIENT_ID_PASSWORD_GRANT_BODY_SHAPE", "my-client")
@@ -156,11 +157,12 @@ async fn bearer_override_skips_oauth() {
         .await;
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth:
         grant_type: client_credentials
         token_url: {base}/token
@@ -182,7 +184,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -208,11 +210,12 @@ async fn ggo_bearer_token_env_skips_oauth() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth:
         grant_type: client_credentials
         token_url: {base}/token
@@ -232,7 +235,7 @@ captain-v2:
             "demo",
             "--var",
             "instanceId=i1",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env("GGO_BEARER_TOKEN", jwt)
@@ -243,11 +246,12 @@ captain-v2:
 #[tokio::test]
 async fn expired_bearer_exits_3() {
     let cfg_yaml = r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: { base_url: http://example }
+        eu: { base_urls: { v2: http://example } }
       auth:
         grant_type: client_credentials
         token_url: http://example/token
@@ -267,7 +271,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             &expired,
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -279,11 +283,12 @@ captain-v2:
 #[tokio::test]
 async fn non_jwt_token_exits_2() {
     let cfg_yaml = r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: { base_url: http://example }
+        eu: { base_urls: { v2: http://example } }
       auth:
         grant_type: client_credentials
         token_url: http://example/token
@@ -302,7 +307,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             "notajwt",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -315,11 +320,12 @@ captain-v2:
 async fn jwe_token_rejected() {
     let bin = env!("CARGO_BIN_EXE_goctl");
     let cfg_yaml = r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: { base_url: http://example }
+        eu: { base_urls: { v2: http://example } }
       auth:
         grant_type: client_credentials
         token_url: http://example/token
@@ -337,7 +343,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             "a.b.c.d.e",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -361,11 +367,12 @@ async fn oauth_token_url_does_not_follow_302_redirect() {
 
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth:
         grant_type: client_credentials
         token_url: {base}/token
@@ -384,7 +391,7 @@ captain-v2:
             "demo",
             "--var",
             "instanceId=i1",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env(
@@ -412,11 +419,12 @@ async fn expires_in_zero_rejected() {
         .await;
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth:
         grant_type: client_credentials
         token_url: {base}/token
@@ -435,7 +443,7 @@ captain-v2:
             "demo",
             "--var",
             "instanceId=i1",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env("GGO_TEST_CLIENT_ID_EXPIRES_IN_ZERO_REJECTED", "my-client")
@@ -496,11 +504,12 @@ async fn exp_accepted_as_float() {
         .await;
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -523,7 +532,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -542,11 +551,12 @@ async fn exp_accepted_as_string() {
         .await;
     let yaml = format!(
         r#"
-captain-v2:
+captain:
   envs:
     demo:
+      default_version: v2
       regions:
-        eu: {{ base_url: {base} }}
+        eu: {{ base_urls: {{ v2: {base} }} }}
       auth: null
 "#,
         base = server.uri()
@@ -569,7 +579,7 @@ captain-v2:
             "instanceId=i1",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")

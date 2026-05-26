@@ -1,5 +1,7 @@
 name: image-draft-get
 description: Fetch a draft image by file name (binary response — non-binary endpoint variant).
+disabled: true
+disabled_reason: "needs more investigation — endpoint shape unconfirmed in dev"
 method: GET
 path: /{orgId}/image/draft/{id}/{fileName}
 auth: bearer

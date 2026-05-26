@@ -2,6 +2,8 @@ name: create-journey-from-template
 description: |
   Instantiate a journey (or other resource) from an existing template.
   `type` is a path param; typically `template` or `journey`.
+disabled: true
+disabled_reason: "pending verification — write endpoint, needs more testing before live use"
 method: POST
 path: /resources/{orgId}/{type}/actions/create-journey-from-template
 auth: bearer

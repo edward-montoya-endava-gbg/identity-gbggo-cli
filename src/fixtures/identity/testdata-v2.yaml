@@ -1,0 +1,8 @@
+# identity fixture — secondary test identity.
+# Same schema as testdata-v1: firstName, middleNames[], lastNames[], dateOfBirth (YYYY-MM-DD).
+firstName: "JOHN"
+middleNames:
+  - "MICHAEL"
+lastNames:
+  - "SMITH"
+dateOfBirth: "1980-06-15"

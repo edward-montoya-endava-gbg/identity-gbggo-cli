@@ -14,11 +14,12 @@ designer:
       regions:
         eu: { base_url: http://example/designer/api }
       auth: null
-captain-v2:
+captain:
   envs:
     prod:
+      default_version: v2
       regions:
-        eu: { base_url: http://example/v2/captain }
+        eu: { base_urls: { v2: http://example/v2/captain } }
       auth:
         grant_type: password
         token_url: http://example/oauth2/token
@@ -152,7 +153,7 @@ fn captain_v2_prod_write_without_confirm_exits_2() {
             "instanceId=i1",
             "--token",
             &jwt,
-            "captain-v2",
+            "captain",
             "journey-state-delete",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -180,7 +181,7 @@ fn captain_v2_prod_write_with_dry_run_no_confirm_ok() {
             "--token",
             &jwt,
             "--dry-run",
-            "captain-v2",
+            "captain",
             "journey-state-delete",
         ])
         .env_remove("GGO_BEARER_TOKEN")
@@ -254,7 +255,7 @@ fn region_case_insensitive() {
             "--token",
             &jwt,
             "--dry-run",
-            "captain-v2",
+            "captain",
             "journey-state-fetch",
         ])
         .env_remove("GGO_BEARER_TOKEN")

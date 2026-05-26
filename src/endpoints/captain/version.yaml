@@ -1,0 +1,10 @@
+name: version
+description: |
+  Return Captain v2 build/version info (auth: none — useful for smoke testing).
+  Response shape: { name, version, environment, build: { ... } }.
+auth: none
+supported_versions: [v2]
+versions:
+  v2:
+    method: GET
+    path: /version

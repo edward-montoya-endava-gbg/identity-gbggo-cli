@@ -1,0 +1,25 @@
+name: journey-state-fetch
+description: Fetch the state of a Captain journey instance.
+auth: bearer
+supported_versions: [v1, v2]
+versions:
+  v1:
+    method: POST
+    path: /journey/state/fetch
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID returned by journey-start.
+        example: "PiKABR_tWSQR8Zm6Tv0gnPj6"
+    body_template: |
+      { "instanceId": {{ instanceId | json_encode }} }
+  v2:
+    method: POST
+    path: /journey/state/fetch
+    required_vars:
+      - name: instanceId
+        kind: string
+        description: Journey instance ID.
+        example: "01HX..."
+    body_template: |
+      { "instanceId": {{ instanceId | json_encode }} }

@@ -7,6 +7,14 @@
 //! - no intra-service name collisions
 //! - every `{{ var }}` in `body_template` is declared in required_vars ∪ optional_vars
 //! - every string-typed var reference in body_template uses `| json_encode`
+//!
+//! Two manifest shapes are supported:
+//! - **Flat** (non-versioned services): the original schema with top-level
+//!   `method`, `path`, `required_vars`, etc.
+//! - **Versioned** (e.g. `captain`): a `supported_versions: [...]` list plus a
+//!   `versions: { v1: {...}, v2: {...} }` map. Each version carries its own
+//!   `method`, `path`, vars, body template, and per-version `disabled` /
+//!   `deprecated` flags.
 
 use crate::error::{CliError, CliResult};
 use include_dir::{include_dir, Dir};
@@ -52,30 +60,174 @@ pub struct OptionalVar {
     pub default: Option<String>,
 }
 
+/// A single version of a versioned endpoint. Same shape as a flat endpoint
+/// minus name/description/auth (which live on the parent `EndpointDef`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct EndpointDef {
-    pub name: String,
-    pub description: String,
+pub struct VersionedEndpoint {
     pub method: String,
     pub path: String,
-    pub auth: Auth,
     #[serde(default)]
     pub required_vars: Vec<RequiredVar>,
     #[serde(default)]
     pub optional_vars: Vec<OptionalVar>,
     #[serde(default)]
     pub body_template: Option<String>,
+    /// Per-version disabled gate. Same semantics as the flat `disabled` field
+    /// but scoped to a single version.
+    #[serde(default)]
+    pub disabled: bool,
+    /// One-line reason surfaced in the disabled-gate error message.
+    #[serde(default)]
+    pub disabled_reason: Option<String>,
+    /// When set, emit a one-shot `tracing::warn!` before execution and
+    /// continue. Use to flag legacy versions slated for retirement.
+    #[serde(default)]
+    pub deprecated: Option<String>,
+}
+
+/// The flat (non-versioned) endpoint shape — the original manifest schema.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FlatEndpoint {
+    pub method: String,
+    pub path: String,
+    #[serde(default)]
+    pub required_vars: Vec<RequiredVar>,
+    #[serde(default)]
+    pub optional_vars: Vec<OptionalVar>,
+    #[serde(default)]
+    pub body_template: Option<String>,
+    /// When true, the endpoint refuses to run at the very top of `exec::run`,
+    /// before any auth/var resolution or `--dry-run` short-circuit.
+    #[serde(default)]
+    pub disabled: bool,
+    /// One-line reason surfaced in the disabled-gate error message.
+    #[serde(default)]
+    pub disabled_reason: Option<String>,
+}
+
+/// Mutually exclusive payload — either a flat endpoint or a versioned one.
+///
+/// We use `untagged` so the YAML loader picks the variant by presence of
+/// `supported_versions` / `versions` vs flat `method`/`path`. The variant order
+/// matters: `Versioned` is tried first so a manifest with both shapes (a bug)
+/// fails on `Flat`'s `deny_unknown_fields`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EndpointBody {
+    /// Tried first: any manifest declaring `supported_versions` / `versions`
+    /// matches `VersionedBody` (newtype with `deny_unknown_fields`). Flat
+    /// manifests (no such keys) fall through to `Flat`. Authoring typos at
+    /// either layer are rejected at parse time because both wrapped structs
+    /// carry `deny_unknown_fields`.
+    Versioned(VersionedBody),
+    Flat(FlatEndpoint),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct VersionedBody {
+    pub supported_versions: Vec<String>,
+    pub versions: BTreeMap<String, VersionedEndpoint>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EndpointDef {
+    pub name: String,
+    pub description: String,
+    pub auth: Auth,
+    // `deny_unknown_fields` cannot be combined with `#[serde(flatten)]` of an
+    // untagged enum (serde collects unknown fields into the flattened payload
+    // and the untagged matcher decides which variant fits). The inner
+    // `FlatEndpoint` / `VersionedEndpoint` structs carry `deny_unknown_fields`
+    // so authoring typos there still error at parse time.
+    #[serde(flatten)]
+    pub body: EndpointBody,
 }
 
 impl EndpointDef {
+    /// Convenience: list the supported versions for a versioned endpoint, or
+    /// `None` for a flat endpoint.
+    pub fn supported_versions(&self) -> Option<&[String]> {
+        match &self.body {
+            EndpointBody::Versioned(v) => Some(v.supported_versions.as_slice()),
+            EndpointBody::Flat(_) => None,
+        }
+    }
+
+    /// Borrow the flat endpoint (or the chosen version's payload) for a given
+    /// resolved version. Returns `None` if the version is missing from a
+    /// versioned endpoint, and ignores `version` for flat endpoints.
+    ///
+    /// The returned view's `version` field borrows from the matched key inside
+    /// `self.versions`, so its lifetime is tied to `&self`.
+    pub fn resolve_version(&self, version: Option<&str>) -> Option<EndpointView<'_>> {
+        match &self.body {
+            EndpointBody::Flat(f) => Some(EndpointView {
+                method: &f.method,
+                path: &f.path,
+                required_vars: &f.required_vars,
+                optional_vars: &f.optional_vars,
+                body_template: f.body_template.as_deref(),
+                disabled: f.disabled,
+                disabled_reason: f.disabled_reason.as_deref(),
+                deprecated: None,
+                version: None,
+            }),
+            EndpointBody::Versioned(vb) => {
+                let v = version?;
+                let (key, ve) = vb.versions.get_key_value(v)?;
+                Some(EndpointView {
+                    method: &ve.method,
+                    path: &ve.path,
+                    required_vars: &ve.required_vars,
+                    optional_vars: &ve.optional_vars,
+                    body_template: ve.body_template.as_deref(),
+                    disabled: ve.disabled,
+                    disabled_reason: ve.disabled_reason.as_deref(),
+                    deprecated: ve.deprecated.as_deref(),
+                    version: Some(key.as_str()),
+                })
+            }
+        }
+    }
+
+    /// True when every supported version (or the flat body) is disabled.
+    pub fn is_fully_disabled(&self) -> bool {
+        match &self.body {
+            EndpointBody::Flat(f) => f.disabled,
+            EndpointBody::Versioned(vb) => {
+                !vb.versions.is_empty() && vb.versions.values().all(|v| v.disabled)
+            }
+        }
+    }
+}
+
+/// Borrowed view of a single (endpoint, version) combination — the common
+/// shape that auth / render / exec all reason over.
+#[derive(Debug, Clone)]
+pub struct EndpointView<'a> {
+    pub method: &'a str,
+    pub path: &'a str,
+    pub required_vars: &'a [RequiredVar],
+    pub optional_vars: &'a [OptionalVar],
+    pub body_template: Option<&'a str>,
+    pub disabled: bool,
+    pub disabled_reason: Option<&'a str>,
+    pub deprecated: Option<&'a str>,
+    /// Version key (e.g. "v1") for a versioned endpoint, or `None` for flat.
+    pub version: Option<&'a str>,
+}
+
+impl<'a> EndpointView<'a> {
     pub fn var_kind(&self, name: &str) -> Option<VarKind> {
-        for r in &self.required_vars {
+        for r in self.required_vars {
             if r.name == name {
                 return Some(r.kind);
             }
         }
-        for o in &self.optional_vars {
+        for o in self.optional_vars {
             if o.name == name {
                 return Some(o.kind);
             }
@@ -167,22 +319,84 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
     if def.name.is_empty() {
         return Err(CliError::config(format!("{file}: empty `name` field")));
     }
-    let method_upper = def.method.to_ascii_uppercase();
+    match &def.body {
+        EndpointBody::Flat(flat) => validate_flat(file, flat)?,
+        EndpointBody::Versioned(vb) => {
+            if vb.supported_versions.is_empty() {
+                return Err(CliError::config(format!(
+                    "{file}: `supported_versions` must list at least one version"
+                )));
+            }
+            for sv in &vb.supported_versions {
+                if !vb.versions.contains_key(sv) {
+                    return Err(CliError::config(format!(
+                        "{file}: supported_versions includes `{sv}` but no `versions.{sv}` block"
+                    )));
+                }
+            }
+            for k in vb.versions.keys() {
+                if !vb.supported_versions.contains(k) {
+                    return Err(CliError::config(format!(
+                        "{file}: `versions.{k}` defined but `{k}` is not in supported_versions"
+                    )));
+                }
+            }
+            for (v, ve) in &vb.versions {
+                let where_ = format!("{file} (version {v})");
+                validate_versioned(&where_, ve)?;
+            }
+        }
+    }
+    let _ = svc;
+    Ok(())
+}
+
+fn validate_flat(file: &str, def: &FlatEndpoint) -> CliResult<()> {
+    validate_request(
+        file,
+        &def.method,
+        &def.path,
+        &def.required_vars,
+        &def.optional_vars,
+        def.body_template.as_deref(),
+    )
+}
+
+fn validate_versioned(file: &str, def: &VersionedEndpoint) -> CliResult<()> {
+    validate_request(
+        file,
+        &def.method,
+        &def.path,
+        &def.required_vars,
+        &def.optional_vars,
+        def.body_template.as_deref(),
+    )
+}
+
+fn validate_request(
+    file: &str,
+    method: &str,
+    path: &str,
+    required_vars: &[RequiredVar],
+    optional_vars: &[OptionalVar],
+    body_template: Option<&str>,
+) -> CliResult<()> {
+    let method_upper = method.to_ascii_uppercase();
     if !ALLOWED_METHODS.contains(&method_upper.as_str()) {
         return Err(CliError::config(format!(
             "{file}: invalid method `{}` (allowed: {})",
-            def.method,
+            method,
             ALLOWED_METHODS.join(", ")
         )));
     }
-    if !def.path.starts_with('/') {
+    if !path.starts_with('/') {
         return Err(CliError::config(format!(
             "{file}: `path` must start with `/` (got `{}`)",
-            def.path
+            path
         )));
     }
     let bodyless = matches!(method_upper.as_str(), "GET" | "HEAD");
-    if bodyless && def.body_template.is_some() {
+    if bodyless && body_template.is_some() {
         return Err(CliError::config(format!(
             "{file}: {} endpoint must not declare `body_template`",
             method_upper
@@ -191,7 +405,7 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
 
     // Names declared.
     let mut declared: BTreeMap<String, VarKind> = BTreeMap::new();
-    for r in &def.required_vars {
+    for r in required_vars {
         if declared.insert(r.name.clone(), r.kind).is_some() {
             return Err(CliError::config(format!(
                 "{file}: duplicate var `{}` in required_vars",
@@ -199,7 +413,7 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
             )));
         }
     }
-    for o in &def.optional_vars {
+    for o in optional_vars {
         if declared.insert(o.name.clone(), o.kind).is_some() {
             return Err(CliError::config(format!(
                 "{file}: duplicate var `{}` in optional_vars (also in required_vars?)",
@@ -209,7 +423,7 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
     }
 
     // Path placeholders must be declared as string-typed vars.
-    for placeholder in extract_path_placeholders(&def.path) {
+    for placeholder in extract_path_placeholders(path) {
         let kind = declared.get(&placeholder).copied().ok_or_else(|| {
             CliError::config(format!(
                 "{file}: path references undeclared var `{placeholder}` (declared: {})",
@@ -224,10 +438,8 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
         }
     }
 
-    if let Some(tmpl) = &def.body_template {
+    if let Some(tmpl) = body_template {
         // Pre-parse with Tera so the load-time scanner shares Tera's grammar.
-        // Anything the runtime would reject (unterminated `{{`, malformed filter
-        // expressions, etc.) surfaces here as a Config error.
         let mut probe = tera::Tera::default();
         probe.autoescape_on(vec![]);
         if let Err(e) = probe.add_raw_template("body", tmpl) {
@@ -236,7 +448,6 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
             )));
         }
 
-        // Find every `{{ ... }}` group; for each, parse the var name and required filter.
         let refs = extract_template_refs(tmpl);
         for r in refs {
             let kind = declared.get(&r.name).copied().ok_or_else(|| {
@@ -256,10 +467,6 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
                     }
                 }
                 VarKind::Json => {
-                    // `kind: json` vars MUST be referenced with either `| json_encode`
-                    // (re-encodes the JSON value as a JSON string) OR `| safe` (passes
-                    // pre-validated JSON through without escaping). A raw reference is
-                    // a manifest authoring bug.
                     let has_filter = r.filters.iter().any(|f| f == "json_encode" || f == "safe");
                     if !has_filter {
                         return Err(CliError::config(format!(
@@ -272,8 +479,6 @@ fn validate_def(svc: &str, def: &EndpointDef, file: &str) -> CliResult<()> {
         }
     }
 
-    // Bind svc to silence unused param when the function grows.
-    let _ = svc;
     Ok(())
 }
 
@@ -324,8 +529,6 @@ fn extract_template_refs(template: &str) -> Vec<TemplateRef> {
             let inner = &template[start..j];
             let parts: Vec<&str> = inner.split('|').map(|s| s.trim()).collect();
             if let Some(first) = parts.first() {
-                // Strip whitespace and a possible `(`-paren expression.
-                // We only accept simple identifiers.
                 let name = first.split_whitespace().next().unwrap_or("").to_string();
                 if !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_') {
                     let filters = parts[1..]
@@ -348,20 +551,53 @@ fn extract_template_refs(template: &str) -> Vec<TemplateRef> {
     out
 }
 
-/// JSON shape used by `describe` / `list-endpoints` (schema_version "1").
+/// Per-version slice surfaced in `describe` JSON for a versioned endpoint.
 #[derive(Debug, Serialize)]
-pub struct DescribeOutput<'a> {
-    pub schema_version: &'static str,
-    pub service: &'a str,
-    pub name: &'a str,
+pub struct DescribeVersion<'a> {
     pub method: &'a str,
     pub path: &'a str,
-    pub description: &'a str,
-    pub auth: &'a Auth,
     pub required_vars: &'a [RequiredVar],
     pub optional_vars: &'a [OptionalVar],
-    pub body_template_preview: Option<&'a str>,
+    pub body_template: Option<&'a str>,
+    pub disabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disabled_reason: Option<&'a str>,
+    pub deprecated: Option<&'a str>,
     pub target_url_pattern: String,
+}
+
+/// JSON shape used by `describe` (schema_version "1").
+///
+/// Schema is additive: flat endpoints emit `method` / `path` / etc as before;
+/// versioned endpoints emit `supported_versions` + `versions:` map.
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+pub enum DescribeOutput<'a> {
+    Flat {
+        schema_version: &'static str,
+        service: &'a str,
+        name: &'a str,
+        method: &'a str,
+        path: &'a str,
+        description: &'a str,
+        auth: &'a Auth,
+        required_vars: &'a [RequiredVar],
+        optional_vars: &'a [OptionalVar],
+        body_template_preview: Option<&'a str>,
+        target_url_pattern: String,
+        disabled: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        disabled_reason: Option<&'a str>,
+    },
+    Versioned {
+        schema_version: &'static str,
+        service: &'a str,
+        name: &'a str,
+        description: &'a str,
+        auth: &'a Auth,
+        supported_versions: &'a [String],
+        versions: BTreeMap<String, DescribeVersion<'a>>,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -373,4 +609,10 @@ pub struct ListEntry<'a> {
     pub description: &'a str,
     pub auth: &'a Auth,
     pub required_vars: &'a [RequiredVar],
+    pub disabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disabled_reason: Option<&'a str>,
+    /// Present only for versioned endpoints.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub supported_versions: Option<&'a [String]>,
 }

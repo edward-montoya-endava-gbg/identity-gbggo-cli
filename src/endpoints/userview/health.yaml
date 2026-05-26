@@ -1,5 +1,15 @@
 name: health
-description: Public health check. No authentication required.
+description: |
+  Public health check. No authentication required.
+
+  NOTE: UserView excludes `health` from the `api` global prefix
+  (`setGlobalPrefix('api', { exclude: ['health'] })` in apps/api/src/main.ts),
+  so it lives at `/view/health`, NOT `/view/api/health`. The configured
+  `base_url` for userview ends in `/view/api`, so this endpoint can't be reached
+  through the normal base. Disabled until the CLI supports a base-path-relative
+  override for prefix-excluded routes.
+disabled: true
+disabled_reason: "lives outside the /view/api base (excluded from the api prefix); not reachable via the configured base_url"
 method: GET
 path: /health
 auth: none
